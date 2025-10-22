@@ -7,6 +7,7 @@ var allQuizData = {
         { question: "What does HTML stand for?", options: ["Hyper Text Markup Language", "Home Tool Markup Language", "Hyperlinks and Text Markup Language", "High Tech Modern Language"], answer: 0, hint: "It's related to the structure of web pages." },
         { question: "What does CSS stand for?", options: ["Colorful Style Sheets", "Cascading Style Sheets", "Creative Style Sheets", "Computer Style Sheets"], answer: 1, hint: "It's about styling web pages in a cascading manner." },
         { question:  "Which HTML tag is used to create a table?", options: ["<table>", "<tr>", "<td>", "<tbody>"], answer: 0, hint: "This tag wraps the entire table structure."},
+        { question: "Which HTML attribute is used to link an external CSS file?", options: ["src", "href", "link", "style"], answer: 1, hint: "It is used inside the <link> tag to point to the CSS file."  },
         { question: "Which symbol is used for comments in JavaScript?", options: ["//", "/* */", "<!-- -->", "#"], answer: 0, hint: "It's a double character that starts a single-line comment." }
     ],
 
@@ -427,4 +428,5 @@ document.getElementById("nextBtn").addEventListener("click", () => {
 
 
 // Initialize progress bar
+
 updateProgress();
