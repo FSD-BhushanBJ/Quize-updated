@@ -1,1 +1,1 @@
-# Quize-updated
+# quize-game
