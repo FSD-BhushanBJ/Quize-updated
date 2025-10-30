@@ -6,9 +6,9 @@ var allQuizData = {
     easy: [
         { question: "What does HTML stand for?", options: ["Hyper Text Markup Language", "Home Tool Markup Language", "Hyperlinks and Text Markup Language", "High Tech Modern Language"], answer: 0, hint: "It's related to the structure of web pages." },
         { question: "What does CSS stand for?", options: ["Colorful Style Sheets", "Cascading Style Sheets", "Creative Style Sheets", "Computer Style Sheets"], answer: 1, hint: "It's about styling web pages in a cascading manner." },
-        { question: "Which HTML tag is used to create a table?", options: ["<table>", "<tr>", "<td>", "<tbody>"], answer: 0, hint: "This tag wraps the entire table structure." },
+        { question: "Which HTML tag is used to create a table?", options: ["table", "tr", "td", "tbody"], answer: 0, hint: "This tag wraps the entire table structure." },
         { question: "Which HTML attribute is used to link an external CSS file?", options: ["src", "href", "link", "style"], answer: 1, hint: "It is used inside the <link> tag to point to the CSS file." },
-        { question: "Which symbol is used for comments in JavaScript?", options: ["//", "/* */", "<!-- -->", "#"], answer: 0, hint: "It's a double character that starts a single-line comment." }
+        { question: "Which symbol is used for comments in JavaScript?", options: ["//", "/* */", "!-- --", "#"], answer: 0, hint: "It's a double character that starts a single-line comment." }
     ],
 
     medium: [
@@ -55,221 +55,345 @@ let totalTime = 0;
 // SELECT AVATAR
 // =======================================
 function selectAvatar(el) {
-    document.querySelectorAll(".avatar").forEach(a => a.classList.remove("selected"));
-    el.classList.add("selected");
-    userAvatar = el.getAttribute("data-avatar");
+  var avatars = document.getElementsByClassName("avatar");
+  for (var i = 0; i < avatars.length; i++) {
+    avatars[i].classList.remove("selected");
+  }
+  el.classList.add("selected");
+  userAvatar = el.getAttribute("data-avatar");
 }
+
 
 // =======================================
 // SELECT DIFFICULTY
 // =======================================
 function selectDifficulty(el) {
-    document.querySelectorAll(".difficulty-option").forEach(btn => btn.classList.remove("selected"));
-    el.classList.add("selected");
-    difficulty = el.getAttribute("data-difficulty");
+  var buttons = document.getElementsByClassName("difficulty-option");
+
+  for (var i = 0; i < buttons.length; i++) {
+    buttons[i].classList.remove("selected");
+  }
+
+  el.classList.add("selected");
+
+  difficulty = el.getAttribute("data-difficulty");
 }
+
 
 // =======================================
 // PAGE SWITCHING (Home / Quiz / Score)
 // =======================================
 function showPage(id) {
-    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-    document.getElementById(id).classList.add("active");
+  var pages = document.getElementsByClassName("page");
+  for (var i = 0; i < pages.length; i++) {
+    pages[i].classList.remove("active");
+  }
+  var pageToShow = document.getElementById(id);
+  pageToShow.classList.add("active");
 }
+
 
 // =======================================
 // START QUIZ
 // =======================================
 function startQuiz() {
-    userName = document.getElementById("username").value.trim();
+  // Get username value
+  var input = document.getElementById("username");
+  userName = input.value.trim();
 
-    // Check if username is entered
-    if (userName === "") {
-        let input = document.getElementById("username");
-        input.style.borderColor = "red";
-        input.classList.add("shake");
-        setTimeout(() => input.classList.remove("shake"), 500);
-        return;
-    }
+  // Check if username is entered
+  if (userName === "") {
+    input.style.borderColor = "red";
+    input.classList.add("shake");
 
-    // Reset game values
-    currentQuestion = 0;
-    score = 0;
-    streak = 0;
-    wrongAnswers = 0;
-    fiftyUsed = hintUsed = skipUsed = false;
+    // Remove shake effect after 0.5 second
+    setTimeout(function() {
+      input.classList.remove("shake");
+    }, 500);
+    return; // Stop here if no username
+  }
 
-    quizData = allQuizData[difficulty];
-    showPage("quizPage");
+  // Reset game values
+  currentQuestion = 0;
+  score = 0;
+  streak = 0;
+  wrongAnswers = 0;
+  fiftyUsed = false;
+  hintUsed = false;
+  skipUsed = false;
 
-    // Update UI
-    document.getElementById("displayName").textContent = userName;
-    document.getElementById("userAvatar").textContent = userAvatar;
-    document.getElementById("totalQuestions").textContent = quizData.length;
+  // Load quiz data based on difficulty
+  quizData = allQuizData[difficulty];
 
-    // Reset badges and buttons
-    document.getElementById("streakBadge").style.display = "none";
-    ["fiftyFifty", "hint", "skipQuestion"].forEach(id => {
-        document.getElementById(id).classList.remove("used");
-    });
+  // Show quiz page
+  showPage("quizPage");
 
-    startTime = new Date(); // Start timer for total time
-    loadQuestion();
-    startTimer();
+  // Update player name, avatar, and total questions
+  document.getElementById("displayName").textContent = userName;
+  document.getElementById("userAvatar").textContent = userAvatar;
+  document.getElementById("totalQuestions").textContent = quizData.length;
+
+  // Hide streak badge
+  document.getElementById("streakBadge").style.display = "none";
+
+  // Reset special buttons (fiftyFifty, hint, skip)
+  var buttonIds = ["fiftyFifty", "hint", "skipQuestion"];
+  for (var i = 0; i < buttonIds.length; i++) {
+    document.getElementById(buttonIds[i]).classList.remove("used");
+  }
+
+  // Start quiz timer and load first question
+  startTime = new Date();
+  loadQuestion();
+  startTimer();
 }
+
 
 // =======================================
 // LOAD QUESTION
 // =======================================
 function loadQuestion() {
-    if (currentQuestion >= quizData.length) {
-        endQuiz();
-        return;
-    }
+  // Check if all questions are done
+  if (currentQuestion >= quizData.length) {
+    endQuiz();
+    return;
+  }
 
-    answered = false;
-    let q = quizData[currentQuestion];
+  answered = false;
+  var q = quizData[currentQuestion]; // current question data
 
-    document.getElementById("currentQuestionNum").textContent = currentQuestion + 1;
-    document.getElementById("question").textContent = q.question;
+  // Update question number and text
+  document.getElementById("currentQuestionNum").textContent = currentQuestion + 1;
+  document.getElementById("question").textContent = q.question;
 
-    let optionsDiv = document.getElementById("options");
-    optionsDiv.innerHTML = ""; // clear previous options
+  // Get options area and clear it
+  var optionsDiv = document.getElementById("options");
+  optionsDiv.innerHTML = "";
 
-    let letters = ["A", "B", "C", "D"];
+  // Letters for options (A, B, C, D)
+  var letters = ["A", "B", "C", "D"];
 
-    q.options.forEach((opt, i) => {
-        let div = document.createElement("div");
-        div.className = "option";
-        div.style.pointerEvents = "auto"; // enable click
-        div.innerHTML = `<div class='option-letter'>${letters[i]}</div><div class='option-text'>${opt}</div>`;
-        div.onclick = () => selectOption(i);
-        optionsDiv.appendChild(div);
-    });
+  // Create and show each option
+  for (var i = 0; i < q.options.length; i++) {
+    var div = document.createElement("div");
+    div.className = "option";
+    div.style.pointerEvents = "auto"; // enable clicking
 
-    // Reset feedback, next button, hint
-    document.getElementById("nextButton").style.display = "none";
-    document.getElementById("feedbackMessage").style.display = "none";
-    document.getElementById("hintBox").style.display = "none";
+    // Set inner content manually (without template strings)
+    div.innerHTML =
+      "<div class='option-letter'>" + letters[i] + "</div>" +
+      "<div class='option-text'>" + q.options[i] + "</div>";
 
-    resetTimer(); // clear old timer and start new one
+    // When user clicks an option
+    div.onclick = (function(index) {
+      return function() {
+        selectOption(index);
+      };
+    })(i);
+
+    // Add option to the options area
+    optionsDiv.appendChild(div);
+  }
+
+  // Hide next button, feedback, and hint
+  document.getElementById("nextButton").style.display = "none";
+  document.getElementById("feedbackMessage").style.display = "none";
+  document.getElementById("hintBox").style.display = "none";
+
+  // Start fresh timer
+  resetTimer();
 }
+
 
 
 // =======================================
 // WHEN USER SELECTS AN OPTION
 // =======================================
 function selectOption(i) {
-    if (answered) return;
-    answered = true;
-    clearInterval(timer);
+  // Stop if already answered
+  if (answered) {
+    return;
+  }
 
-    let correct = quizData[currentQuestion].answer;
-    let options = document.querySelectorAll(".option");
-    let msg = document.getElementById("feedbackMessage");
+  answered = true;
+  clearInterval(timer);
 
-    options.forEach((opt, index) => {
-        opt.style.pointerEvents = "none"; // disable all options
-        if (index === i) opt.classList.add("selected");
-        if (index === correct) opt.classList.add("correct");
-        else if (index === i && index !== correct) opt.classList.add("incorrect");
-    });
+  var correct = quizData[currentQuestion].answer; // correct answer index
+  var options = document.getElementsByClassName("option"); // all options
+  var msg = document.getElementById("feedbackMessage");
 
-    if (i === correct) {
-        msg.textContent = "Correct! 🎉";
-        msg.className = "feedback correct";
-        score++;
-        streak++;
-        if (streak >= 3) {
-            let badge = document.getElementById("streakBadge");
-            badge.textContent = `🔥 ${streak} streak`;
-            badge.style.display = "inline-block";
-        }
-    } else {
-        msg.textContent = "Incorrect! The correct answer is " +
-            options[correct].querySelector(".option-text").textContent;
-        msg.className = "feedback incorrect";
-        streak = 0;
-        wrongAnswers++;
-        document.getElementById("streakBadge").style.display = "none";
+  // Disable all options and mark correct/incorrect ones
+  for (var index = 0; index < options.length; index++) {
+    options[index].style.pointerEvents = "none"; // disable clicks
+
+    if (index === i) {
+      options[index].classList.add("selected");
     }
 
-    msg.style.display = "block";
-    document.getElementById("nextButton").style.display = "block";
+    if (index === correct) {
+      options[index].classList.add("correct");
+    } else if (index === i && index !== correct) {
+      options[index].classList.add("incorrect");
+    }
+  }
+
+  // If user selected correct option
+  if (i === correct) {
+    msg.textContent = "Correct! 🎉";
+    msg.className = "feedback correct";
+    score++;
+    streak++;
+
+    // Show streak badge if streak >= 3
+    if (streak >= 3) {
+      var badge = document.getElementById("streakBadge");
+      badge.textContent = "🔥 " + streak + " streak";
+      badge.style.display = "inline-block";
+    }
+
+  } else {
+    // If user selected wrong option
+    msg.textContent =
+      "Incorrect! The correct answer is " +
+      options[correct].getElementsByClassName("option-text")[0].textContent;
+    msg.className = "feedback incorrect";
+    streak = 0;
+    wrongAnswers++;
+    document.getElementById("streakBadge").style.display = "none";
+  }
+
+  // Show feedback and next button
+  msg.style.display = "block";
+  document.getElementById("nextButton").style.display = "block";
 }
+
 
 
 // =======================================
 // LIFELINE: 50-50
 // =======================================
 function useFiftyFifty() {
-    if (fiftyUsed || answered) return;
-    fiftyUsed = true;
-    document.getElementById("fiftyFifty").classList.add("used");
+  // Stop if already used or question is answered
+  if (fiftyUsed || answered) {
+    return;
+  }
 
-    let correct = quizData[currentQuestion].answer;
-    let options = document.querySelectorAll(".option");
-    let wrongIndexes = [];
-    options.forEach((opt, i) => { if (i !== correct) wrongIndexes.push(i); });
+  fiftyUsed = true;
+  document.getElementById("fiftyFifty").classList.add("used");
 
-    // Shuffle wrongIndexes and remove 2
-    wrongIndexes.sort(() => 0.5 - Math.random());
-    for (let i = 0; i < 2; i++) {
-        options[wrongIndexes[i]].style.opacity = "0.3";
-        options[wrongIndexes[i]].style.pointerEvents = "none";
+  // Get correct answer index
+  var correct = quizData[currentQuestion].answer;
+
+  // Get all option elements
+  var options = document.getElementsByClassName("option");
+  var wrongIndexes = [];
+
+  // Find wrong option indexes
+  for (var i = 0; i < options.length; i++) {
+    if (i !== correct) {
+      wrongIndexes.push(i);
     }
+  }
+
+  // Shuffle wrongIndexes manually (simple beginner way)
+  for (var j = wrongIndexes.length - 1; j > 0; j--) {
+    var randomIndex = Math.floor(Math.random() * (j + 1));
+    var temp = wrongIndexes[j];
+    wrongIndexes[j] = wrongIndexes[randomIndex];
+    wrongIndexes[randomIndex] = temp;
+  }
+
+  // Hide 2 wrong options
+  for (var k = 0; k < 2; k++) {
+    var wrongOption = options[wrongIndexes[k]];
+    wrongOption.style.opacity = "0.3";
+    wrongOption.style.pointerEvents = "none";
+  }
 }
+
 
 
 // =======================================
 // LIFELINE: HINT
 // =======================================
 function useHint() {
-    if (hintUsed || answered) return;
-    hintUsed = true;
-    document.getElementById("hint").classList.add("used");
-    let hintBox = document.getElementById("hintBox");
-    hintBox.textContent = quizData[currentQuestion].hint;
-    hintBox.style.display = "block";
+  // Stop if hint already used or question already answered
+  if (hintUsed || answered) {
+    return;
+  }
+
+  // Mark hint as used
+  hintUsed = true;
+  document.getElementById("hint").classList.add("used");
+
+  // Show hint text box
+  var hintBox = document.getElementById("hintBox");
+  var currentHint = quizData[currentQuestion].hint;
+
+  // Display the hint
+  hintBox.textContent = currentHint;
+  hintBox.style.display = "block";
 }
+
 
 // =======================================
 // LIFELINE: SKIP
 // =======================================
 function useSkip() {
-    if (skipUsed || answered) return;
-    skipUsed = true;
-    document.getElementById("skipQuestion").classList.add("used");
-    nextQuestion();
+  // Stop if skip already used or question is already answered
+  if (skipUsed || answered) {
+    return;
+  }
+
+  // Mark skip as used
+  skipUsed = true;
+  document.getElementById("skipQuestion").classList.add("used");
+
+  // Move to the next question
+  nextQuestion();
 }
+
 
 // =======================================
 // NEXT QUESTION
 // =======================================
 
 function nextQuestion() {
-    currentQuestion++;
-    if (currentQuestion < quizData.length) {
-        answered = false; // reset answered flag
-        loadQuestion();
-        resetTimer(); // restart timer for the new question
-        resetOptions(); // remove previous highlights, if needed
-        document.getElementById("nextButton").style.display = "none"; // hide next button
-    } else {
-        endQuiz();
-    }
+  // Move to the next question
+  currentQuestion = currentQuestion + 1;
+
+  // Check if there are still questions left
+  if (currentQuestion < quizData.length) {
+    answered = false; // allow answering again
+    loadQuestion();   // load next question
+    resetTimer();     // restart timer
+    resetOptions();   // clear old highlights
+
+    // Hide next button again
+    document.getElementById("nextButton").style.display = "none";
+  } else {
+    // If no more questions, end the quiz
+    endQuiz();
+  }
 }
+
 
 function resetOptions() {
-    const options = document.querySelectorAll(".option");
-    options.forEach(option => {
-        option.classList.remove("correct", "incorrect");
-        option.style.pointerEvents = "auto"; // enable clicking again
-    });
+  // Get all option elements
+  var options = document.getElementsByClassName("option");
 
-    const feedback = document.getElementById("feedbackMessage");
-    feedback.style.display = "none"; // hide previous feedback
+  // Remove old styles and enable clicking again
+  for (var i = 0; i < options.length; i++) {
+    options[i].classList.remove("correct");
+    options[i].classList.remove("incorrect");
+    options[i].style.pointerEvents = "auto";
+  }
+
+  // Hide old feedback message
+  var feedback = document.getElementById("feedbackMessage");
+  feedback.style.display = "none";
 }
+
 
 
 
@@ -277,92 +401,140 @@ function resetOptions() {
 // TIMER FUNCTIONS
 // =======================================
 function startTimer() {
-    clearInterval(timer); // Stop any previous timer
+  // Stop any previous timer
+  clearInterval(timer);
 
-    if (difficulty === "easy") timeLeft = 20;
-    else if (difficulty === "medium") timeLeft = 15;
-    else timeLeft = 10;
+  // Set time based on difficulty level
+  if (difficulty === "easy") {
+    timeLeft = 20;
+  } else if (difficulty === "medium") {
+    timeLeft = 15;
+  } else {
+    timeLeft = 10;
+  }
 
-    updateTimer();
+  // Show the starting time
+  updateTimer();
 
-    timer = setInterval(() => {
-        timeLeft--;
-        updateTimer();
+  // Start a new timer that runs every 1 second
+  timer = setInterval(function() {
+    timeLeft = timeLeft - 1; // reduce time
+    updateTimer(); // update display
 
-        if (timeLeft <= 0) {
-            clearInterval(timer);
-            handleTimeUp();
-        }
-    }, 1000);
+    // If time is over, stop timer and handle timeout
+    if (timeLeft <= 0) {
+      clearInterval(timer);
+      handleTimeUp();
+    }
+  }, 1000);
 }
+
 
 function handleTimeUp() {
-    if (!answered) {
-        let msg = document.getElementById("feedbackMessage");
-        msg.textContent = "Time's up!";
-        msg.className = "feedback incorrect";
-        msg.style.display = "block";
+  // Check if user hasn't answered yet
+  if (!answered) {
+    var msg = document.getElementById("feedbackMessage");
+    msg.textContent = "Time's up!";
+    msg.className = "feedback incorrect";
+    msg.style.display = "block";
 
-        let correct = quizData[currentQuestion].answer;
-        document.querySelectorAll(".option")[correct].classList.add("correct");
+    // Show which option was correct
+    var correct = quizData[currentQuestion].answer;
+    var options = document.getElementsByClassName("option");
+    options[correct].classList.add("correct");
 
-        streak = 0;
-        wrongAnswers++;
-        document.getElementById("streakBadge").style.display = "none";
-        answered = true;
-        document.getElementById("nextButton").style.display = "block";
-    }
+    // Reset streak and count wrong answer
+    streak = 0;
+    wrongAnswers++;
+
+    // Hide streak badge
+    document.getElementById("streakBadge").style.display = "none";
+
+    // Mark question as answered and show next button
+    answered = true;
+    document.getElementById("nextButton").style.display = "block";
+  }
 }
+
 
 
 function resetTimer() {
-    clearInterval(timer);
+  // Stop any old timer
+  clearInterval(timer);
 
-    if (difficulty === "easy") timeLeft = 20;
-    else if (difficulty === "medium") timeLeft = 15;
-    else timeLeft = 10;
+  // Set timer value based on difficulty
+  if (difficulty === "easy") {
+    timeLeft = 20;
+  } else if (difficulty === "medium") {
+    timeLeft = 15;
+  } else {
+    timeLeft = 10;
+  }
 
-    updateTimer();
+  // Update timer display right away
+  updateTimer();
 
-    timer = setInterval(() => {
-        timeLeft--;
-        updateTimer();
-        if (timeLeft <= 0) {
-            clearInterval(timer);
-            handleTimeUp();
-        }
-    }, 1000);
+  // Start a new timer that counts down every 1 second
+  timer = setInterval(function() {
+    timeLeft = timeLeft - 1; // decrease time
+    updateTimer(); // show remaining time
+
+    // If time runs out, stop timer and handle timeout
+    if (timeLeft <= 0) {
+      clearInterval(timer);
+      handleTimeUp();
+    }
+  }, 1000);
 }
+
 
 
 
 function updateTimer() {
+    // find the timer text area on the page
     let timerText = document.getElementById("timer");
+
+    // show how many seconds are left
     timerText.textContent = timeLeft + " seconds";
-    timerText.style.color = timeLeft <= 5 ? "red" : "#ff4757";
+
+    // if time is 5 or less, show text in red color
+    if (timeLeft <= 5) {
+        timerText.style.color = "red";
+    } else {
+        timerText.style.color = "#ff4757"; // normal color
+    }
 }
+
 
 // =======================================
 // END QUIZ
 // =======================================
 function endQuiz() {
+    // stop the timer
     clearInterval(timer);
+
+    // show the score page
     showPage("scorePage");
 
-    let endTime = new Date();
-    totalTime = Math.round((endTime - startTime) / 1000);
+    // calculate total time taken
+    let endTime = new Date(); // get the current time
+    totalTime = Math.round((endTime - startTime) / 1000); // convert milliseconds to seconds
+
+    // calculate percentage score
     let percent = Math.round((score / quizData.length) * 100);
 
+    // show score details on the page
     document.getElementById("scoreText").textContent = percent + "%";
     document.getElementById("finalScore").textContent = "Your Score: " + score + "/" + quizData.length;
     document.getElementById("correctAnswers").textContent = score;
     document.getElementById("incorrectAnswers").textContent = wrongAnswers;
     document.getElementById("timeUsed").textContent = formatTime(totalTime);
 
+    // make a message based on performance
     let message = "";
     if (percent >= 80) {
         message = "Excellent! You're a coding genius! 🏆";
-        makeConfetti();
+        makeConfetti(); // show celebration effect
     } else if (percent >= 60) {
         message = "Good job! 👍";
     } else if (percent >= 40) {
@@ -370,40 +542,87 @@ function endQuiz() {
     } else {
         message = "Keep practicing! 💪";
     }
+
+    // show message on the screen
     document.getElementById("scoreMsg").textContent = message;
 }
+
 
 // =======================================
 // HELPER FUNCTIONS
 // =======================================
 function formatTime(seconds) {
+    // find how many full minutes are there
     let mins = Math.floor(seconds / 60);
+
+    // find how many seconds are left after removing full minutes
     let secs = seconds % 60;
-    return mins + ":" + (secs < 10 ? "0" + secs : secs);
+
+    // if seconds are less than 10, add a "0" before it (example: 05 instead of 5)
+    if (secs < 10) {
+        secs = "0" + secs;
+    }
+
+    // return in "minutes:seconds" format
+    return mins + ":" + secs;
 }
 
+
 function makeConfetti() {
+    // create 100 small confetti pieces
     for (let i = 0; i < 100; i++) {
+        // make a new <div> element for each confetti
         let c = document.createElement("div");
-        c.className = "confetti";
+        c.className = "confetti"; // add CSS class for style
+
+        // place it randomly across screen width (0 to 100vw)
         c.style.left = Math.random() * 100 + "vw";
+
+        // add random delay before falling
         c.style.animationDelay = Math.random() * 3 + "s";
-        c.style.backgroundColor = `hsl(${Math.random() * 360},100%,50%)`;
+
+        // give it a random bright color
+        c.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+
+        // add confetti piece to the page
         document.body.appendChild(c);
+
+        // remove it after 4 seconds (cleanup)
         setTimeout(() => c.remove(), 4000);
     }
 }
 
 
 function playAgain() {
+    // Go back to the first page (welcome page)
     showPage("welcomePage");
+
+    // Reset the username input box
     document.getElementById("username").value = "";
+
+    // Set default display name
     document.getElementById("displayName").textContent = "User";
+
+    // Set default avatar emoji
     document.getElementById("userAvatar").textContent = "👩‍💻";
-    // Reset selected avatar and difficulty
-    document.querySelectorAll(".avatar").forEach(a => a.classList.remove("selected"));
-    document.querySelectorAll(".difficulty-option").forEach(d => d.classList.remove("selected"));
-    document.querySelector(".difficulty-option[data-difficulty='easy']").classList.add("selected");
+
+    // Remove selected class from all avatars (manually)
+    let avatars = document.getElementsByClassName("avatar");
+    for (let i = 0; i < avatars.length; i++) {
+        avatars[i].classList.remove("selected");
+    }
+
+    // Remove selected class from all difficulty buttons
+    let diffButtons = document.getElementsByClassName("difficulty-option");
+    for (let i = 0; i < diffButtons.length; i++) {
+        diffButtons[i].classList.remove("selected");
+    }
+
+    // Set the default difficulty to "easy"
+    let easyButton = document.querySelector(".difficulty-option[data-difficulty='easy']");
+    easyButton.classList.add("selected");
+
+    // Update difficulty variable
     difficulty = "easy";
 }
 
@@ -413,18 +632,36 @@ function playAgain() {
 document.getElementById("totalQuestions").textContent = totalQuestions;
 
 function updateProgress() {
-    const progressPercent = ((currentQuestion + 1) / totalQuestions) * 100;
-    const progressBar = document.getElementById("progress");
+    // Calculate how much of the quiz is completed
+    let progressPercent = ((currentQuestion + 1) / totalQuestions) * 100;
+
+    // Get the progress bar element
+    let progressBar = document.getElementById("progress");
+
+    // Change the bar size (width) according to progress
     progressBar.style.width = progressPercent + "%";
+
+    // Show percentage text inside the bar
     progressBar.textContent = Math.round(progressPercent) + "%";
-    document.getElementById("currentQuestionNum").textContent = currentQuestion;
+
+    // Show current question number on the screen
+    document.getElementById("currentQuestionNum").textContent = currentQuestion + 1;
 }
 
+
 // Next question button click
-document.getElementById("nextBtn").addEventListener("click", () => {
-    nextQuestion();      // load next question properly
-    updateProgress();    // update progress bar
+// When user clicks the "Next" button
+let nextButton = document.getElementById("nextBtn");
+
+// Add a click event listener
+nextButton.addEventListener("click", function() {
+    // Move to the next question
+    nextQuestion();
+
+    // Update the progress bar
+    updateProgress();
 });
+
 
 
 // Initialize progress bar
