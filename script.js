@@ -54,29 +54,33 @@ let totalTime = 0;
 // =======================================
 // SELECT AVATAR
 // =======================================
-function selectAvatar(el) {
+function selectAvatar(element) {
   var avatars = document.getElementsByClassName("avatar");
+
   for (var i = 0; i < avatars.length; i++) {
-    avatars[i].classList.remove("selected");
+    var avatar = avatars[i];
+    avatar.className = avatar.className.replace(" selected", "");
   }
-  el.classList.add("selected");
-  userAvatar = el.getAttribute("data-avatar");
+  element.className += " selected";
+ 
+  userAvatar = element.getAttribute("data-avatar");
+  alert("You selected this Avatar: " + userAvatar);0
 }
+
 
 
 // =======================================
 // SELECT DIFFICULTY
 // =======================================
-function selectDifficulty(el) {
+function selectDifficulty(element) {
   var buttons = document.getElementsByClassName("difficulty-option");
-
   for (var i = 0; i < buttons.length; i++) {
-    buttons[i].classList.remove("selected");
+    var btn = buttons[i];
+    btn.className = btn.className.replace(" selected", "");
   }
-
-  el.classList.add("selected");
-
-  difficulty = el.getAttribute("data-difficulty");
+  element.className += " selected";
+  difficulty = element.getAttribute("data-difficulty");
+  alert("You selected : " + difficulty + " level");
 }
 
 
